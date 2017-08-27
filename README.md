@@ -1,2 +1,3 @@
 # snet
-network simulator based on score
+network simulator based on score and written in rust
+
