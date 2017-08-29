@@ -2,5 +2,13 @@
 name = "snet"
 version = "0.1.0"
 authors = ["Jesse Jones <jesse9jones@gmail.com>"]
+repository = "https://github.com/jesse99/snet"
+description = "Library for simulating computer networks built on top of the score library"
+readme = "README.md"
+keywords = ["discrete", "networking", "simulation"]
+categories = ["science", "simulation", "network-programming"]
+license = "GPL-3.0"
 
+# TODO: eventually switch score to using crates.io
 [dependencies]
+score = {git = "https://github.com/jesse99/score"}
