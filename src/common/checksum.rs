@@ -13,12 +13,34 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software Foundation,
 // Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+use std::ops::Index;
 
-//! Contains types that are used across layers.
-pub mod checksum;
-pub mod ip_address;
-pub mod packet;
+/// Returns the Internet checksum.
+pub fn checksum<I>(bytes: &I, len: usize) -> u16
+	where I: Index<usize, Output=u8>
+{
+	// Based on section 4.1 in https://tools.ietf.org/html/rfc1071
+	let mut sum: i32 = 0;
 
-pub use self::checksum::*;
-pub use self::ip_address::*;
-pub use self::packet::*;
+	// Add each 16-bit word
+	let mut i = 0;
+	while i+1 < len {
+		let word = (*bytes.index(i) as u16) << 8 | (*bytes.index(i+1) as u16);
+		sum = sum.wrapping_add(word as i32);
+		i += 2;
+	}
+
+	// Add the left over byte if it exists.
+	if i < len {
+		let word = *bytes.index(i) as u16;
+		sum = sum.wrapping_add(word as i32);
+	}
+
+	// Fold the 32-bit sum into 16-bits.
+	while (sum >> 16) != 0 {
+		sum = (sum & 0xFFFF) | (sum >> 16);
+	}
+
+	// And return the complement.
+	!sum as u16
+}

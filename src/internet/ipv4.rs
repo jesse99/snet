@@ -101,13 +101,13 @@ impl IPv4Header
 
 		assert!(self.fragment_offset < 8192);	// flags + frag offset
 		let hw = (self.more_fragments as u16) << 15 | (self.dont_fragment as u16) << 14 | self.fragment_offset;
-		println!("pushed {}", hw);
+		//println!("pushed {}", hw);
 		header.push16(hw);
 	
 		header.push8(self.ttl);				// ttl
 		header.push8(self.protocol);		// protocol
 
-		let hw = 0;							// checksum (this is set for real after we've pushed the header and payload)
+		let hw = 0;							// checksum (this is set for real after we've pushed the header)
 		header.push16(hw);
 
 		header.push8(self.source_addr[0]);	// source IP
@@ -119,9 +119,11 @@ impl IPv4Header
 		header.push8(self.dest_addr[1]);
 		header.push8(self.dest_addr[2]);
 		header.push8(self.dest_addr[3]);
-	
-		// TODO: compute checksum
-		println!("header = {:?}", header);
+
+		let crc = header.checksum();
+		header.data[10] = (crc >> 8) as u8;
+		header.data[11] = (crc & 0xFF) as u8;	
+		//println!("header = {:?}", header);
 
 		packet.push_header(&header);
 	}
@@ -130,7 +132,10 @@ impl IPv4Header
 	pub fn pop(packet: &mut Packet) -> Result<IPv4Header, String>
 	{
 		let in_len = packet.len();
-		// TODO: compute checksum
+		let crc = packet.checksum(20);
+		if crc != 0 {
+			return Err("IPv4Header checksum error".to_string())
+		}
 
 		let b = packet.pop8();
 		let version = b >> 4;
@@ -153,14 +158,13 @@ impl IPv4Header
 		};
 
 		let total_length = packet.pop16() as usize;
-		if total_length < in_len {
-			return Err(format!("IPv4Header.total_length is too small, expected at least {} but it is {}", in_len, total_length))
+		if total_length != in_len {
+			return Err(format!("IPv4Header.total_length should be {} but is {}", in_len, total_length))
 		}
 
 		let identification = packet.pop16();
 
 		let hw = packet.pop16();
-		//println!("popped {}", hw);
 		let more_fragments = hw & 0x8000 != 0;
 		let dont_fragment = hw & 0x4000 != 0;
 		let reserved = hw & 0x2000 != 0;
@@ -175,7 +179,7 @@ impl IPv4Header
 			return Err(format!("IPv4Header.protocol is using the RESERVED protocol (use one of the unassigned values instead for a custom protocol)"))
 		}
 
-		let checksum = packet.pop16();		// TODO: check this
+		let _ = packet.pop16();		// this is the checksum (which we actually checked first thing)
 
 		let source_addr = [packet.pop8(), packet.pop8(), packet.pop8(), packet.pop8()];
 		let dest_addr = [packet.pop8(), packet.pop8(), packet.pop8(), packet.pop8()];

@@ -94,6 +94,8 @@ impl Packet
 	/// Apps can use this to push payloads onto a packet.
 	pub fn push_bytes(&mut self, data: &[u8])
 	{
+		assert!(self.offset == 0, "mixing pushs and pops isn't supported");
+
 		self.payload.extend(data);
 	}
 
@@ -130,6 +132,11 @@ impl Packet
 		}
 
 		result
+	}
+
+	pub fn checksum(&self, len: usize) -> u16
+	{
+		super::checksum::checksum(&self.payload, len)
 	}
 }
 
@@ -174,6 +181,11 @@ impl Header
 	pub fn push_bytes(&mut self, data: &[u8])
 	{
 		self.data.extend(data);
+	}
+
+	pub fn checksum(&self) -> u16
+	{
+		super::checksum::checksum(&self.data, self.data.len())
 	}
 }
 
