@@ -14,9 +14,7 @@
 // along with this program; if not, write to the Free Software Foundation,
 // Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
-//! This is the layer responsible for routing frames towards an endpoint.
-pub mod internet;
-pub mod ipv4;		// TODO: to make a sub-module private omit the pub
-pub mod protocol_numbers;
-pub mod upper_internet;
+//! This is the layer responsible for endpoint to endpoint communication.
+pub mod socket;
+pub mod udp;
 

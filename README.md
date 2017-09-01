@@ -8,7 +8,7 @@ The core directories are of the network stack. The stack is composed of layers a
 
 * The *physical* layer is repsonsible for handing the transmission of bits on a wire or over the air, e.g. simulating antennae and radio wave propagation.
 * The *link* layer is responsible for data that travels a single hop, e.g. ARP, MAC, tunnels.
-* The *internet* layer is responsible for routing frames between endpoints, e.g. IP and IGMP.
+* The *internet* layer is responsible for routing frames towards an endpoint, e.g. IP and IGMP.
 * The *transport* layer is responsible for endpoint to endpoint communication, e.g. TCP and UDP.
 * The *application* layer handles process to process communication, e.g. DNS, HTTP, NTP, SSH, RTP, etc.
 
