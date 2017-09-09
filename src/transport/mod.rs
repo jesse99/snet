@@ -15,6 +15,9 @@
 // Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 //! This is the layer responsible for endpoint to endpoint communication.
-pub mod socket;
-pub mod udp;
+pub use self::socket::*;
+pub use self::udp::*;
+
+mod socket;
+mod udp;
 

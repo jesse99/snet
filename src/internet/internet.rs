@@ -19,7 +19,7 @@ use internet::protocol_numbers::*;
 use score::*;
 // use std::str;
 use std::thread;
-use transport::socket::*;
+use transport::*;
 
 /// This, and [`SocketOptions`] and [`Packet`], are the types used to communicate between
 /// the transport and internet layers.

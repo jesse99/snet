@@ -14,40 +14,40 @@
 // along with this program; if not, write to the Free Software Foundation,
 // Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 use common::*;
-use internet::ipv4::*;
-use internet::internet::*;
+use internet::*;
 // use internet::protocol_numbers::*;
+// use internet::upper_internet::*;
+use link::link::*;
 use score::*;
 // use std::str;
 use std::thread;
-use transport::*;
+// use std::u16;
+// use transport::socket::*;
 
-/// Handles dispatching downward packets to either [`IPv4Component`] or [`IPv6Component`].
-/// For upward packets this will (normally) send an event to [`LowerTransportComponent`].
-pub struct UpperInternetComponent
+/// MAC that relies on a perfectly ideal wire.
+pub struct IdealMacComponent	// TODO: get rid of this later?
 {
 	data: ThreadData,
 
 	/// Listens for "send_down" events.
-	pub upper_in: InPort<(InternetInfo, SocketOptions, Packet)>,
-	pub upper_out: OutPort<(InternetInfo, Packet)>,
-	// TODO: IPv6
+	pub upper_in: InPort<(IPv4Header, Packet)>,	
+	pub upper_out: OutPort<(LinkInfo, Packet)>,
 
 	/// Listens for "send_up" events.
-	pub lower_in: InPort<(InternetInfo, Packet)>,
-	pub lower_ipv4_out: OutPort<(IPv4Header, Packet)>,
+	pub lower_in: InPort<(Packet)>,
+	pub lower_out: OutPort<(Packet)>,
 }
 
-impl UpperInternetComponent
+impl IdealMacComponent
 {
-	pub fn new(sim: &mut Simulation, parent_id: ComponentID) -> UpperInternetComponent
+	pub fn new(sim: &mut Simulation, parent_id: ComponentID) -> Self
 	{
-		let (id, data) = sim.add_active_component("IPv4", parent_id);
-		UpperInternetComponent {
+		let (id, data) = sim.add_active_component("IdealMac", parent_id);
+		IdealMacComponent {
 			data: data,
 
 			upper_in: InPort::with_port_name(id, "upper_in"),
-			lower_ipv4_out: OutPort::new(),
+			lower_out: OutPort::new(),
 
 			lower_in: InPort::with_port_name(id, "lower_in"),
 			upper_out: OutPort::new(),
@@ -61,13 +61,13 @@ impl UpperInternetComponent
 				"init 0" => {
 				},
 				"send_down" => {
-					let (iinfo, options, packet) = event.take_payload::<(InternetInfo, SocketOptions, Packet)>();
-					let header = IPv4Header::with_internet(&iinfo, &options);
-					self.lower_ipv4_out.send_payload(&mut effector, &event.name, (header, packet));
+					let (_, packet) = event.take_payload::<(IPv4Header, Packet)>();
+					self.lower_out.send_payload(&mut effector, &event.name, packet);
 				},
 				"send_up" => {
-					let (info, packet) = event.take_payload::<(InternetInfo, Packet)>();
-					self.upper_out.send_payload(&mut effector, &event.name, (info, packet));
+					let packet = event.take_payload::<Packet>();
+					let linfo = LinkInfo::new(0, 0, 0);	// TODO: need to push and pop this
+					self.upper_out.send_payload(&mut effector, &event.name, (linfo, packet));
 				}
 			);
 		});

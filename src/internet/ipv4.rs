@@ -17,12 +17,12 @@ use common::*;
 use internet::internet::*;
 use internet::protocol_numbers::*;
 //use internet::upper_internet::*;
-use link::link::*;
+use link::*;
 use score::*;
 use std::str;
 use std::thread;
 use std::u16;
-use transport::socket::*;
+use transport::*;
 
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
 pub enum ECN

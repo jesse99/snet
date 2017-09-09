@@ -15,10 +15,11 @@
 // Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 //! Contains types that are used across layers.
-pub mod checksum;
-pub mod ip_address;
-pub mod packet;
-
 pub use self::checksum::*;
 pub use self::ip_address::*;
 pub use self::packet::*;
+
+mod checksum;
+mod ip_address;
+mod packet;
+

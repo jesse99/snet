@@ -11,4 +11,5 @@ license = "GPL-3.0"
 
 # TODO: eventually switch score to using crates.io
 [dependencies]
+clap = "2.24.0"			# pretty nifty command line parser
 score = {git = "https://github.com/jesse99/score"}
