@@ -252,7 +252,7 @@ pub struct IPv4Component
 
 impl IPv4Component
 {
-	pub fn new(sim: &mut Simulation, parent_id: ComponentID) -> IPv4Component
+	pub fn new(sim: &mut Simulation, parent_id: ComponentID) -> Self
 	{
 		let (id, data) = sim.add_active_component("IPv4", parent_id);
 		IPv4Component {

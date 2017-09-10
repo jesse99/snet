@@ -34,7 +34,7 @@ pub struct Header
 
 impl Packet
 {
-	pub fn new(name: &str, id: &str) -> Packet
+	pub fn new(name: &str, id: &str) -> Self
 	{
 		assert!(!name.is_empty());
 		assert!(!id.is_empty());
@@ -145,13 +145,13 @@ impl Packet
 // constructed elements to the start of a Vec or VecDeque).
 impl Header
 {
-	pub fn new() -> Header
+	pub fn new() -> Self
 	{
 		let data = Vec::with_capacity(20);
 		Header{data}
 	}
 
-	pub fn with_capacity(capacity: usize) -> Header
+	pub fn with_capacity(capacity: usize) -> Self
 	{
 		let data = Vec::with_capacity(capacity);
 		Header{data}

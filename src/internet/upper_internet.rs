@@ -40,7 +40,7 @@ pub struct UpperInternetComponent
 
 impl UpperInternetComponent
 {
-	pub fn new(sim: &mut Simulation, parent_id: ComponentID) -> UpperInternetComponent
+	pub fn new(sim: &mut Simulation, parent_id: ComponentID) -> Self
 	{
 		let (id, data) = sim.add_active_component("IPv4", parent_id);
 		UpperInternetComponent {

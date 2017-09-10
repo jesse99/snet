@@ -57,7 +57,7 @@ pub struct SocketOptions
 
 impl SocketOptions
 {
-	pub fn with_addr(_: IPAddress) -> SocketOptions
+	pub fn with_addr(_: IPAddress) -> Self
 	{	
 		SocketOptions{priority: 0, ttl: 255, dont_fragment: false}	// TODO: set ttl to 1 for multicast
 	}

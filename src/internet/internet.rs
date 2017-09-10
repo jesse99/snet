@@ -37,7 +37,7 @@ pub struct InternetInfo
 
 impl InternetInfo
 {
-	pub fn new(protocol: u8, src_addr: IPAddress, dst_addr: IPAddress) -> InternetInfo
+	pub fn new(protocol: u8, src_addr: IPAddress, dst_addr: IPAddress) -> Self
 	{	
 		assert!(protocol != RESERVED);
 		InternetInfo {protocol, src_addr, dst_addr}
@@ -61,7 +61,7 @@ pub struct InternetComponent
 
 impl InternetComponent
 {
-	pub fn new(sim: &mut Simulation, parent_id: ComponentID) -> InternetComponent
+	pub fn new(sim: &mut Simulation, parent_id: ComponentID) -> Self
 	{
 		let (id, data) = sim.add_active_component("IPv4", parent_id);
 		InternetComponent {

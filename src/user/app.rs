@@ -38,7 +38,7 @@ pub struct AppComponent
 
 impl AppComponent
 {
-	pub fn new(sim: &mut Simulation, parent_id: ComponentID) -> AppComponent
+	pub fn new(sim: &mut Simulation, parent_id: ComponentID) -> Self
 	{
 		let (id, data) = sim.add_active_component("app", parent_id);
 		AppComponent {

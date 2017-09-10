@@ -36,7 +36,7 @@ pub struct LinkInfo
 
 impl LinkInfo
 {
-	pub fn new(protocol: u8, src_addr: u64, dst_addr: u64) -> LinkInfo
+	pub fn new(protocol: u8, src_addr: u64, dst_addr: u64) -> Self
 	{	
 		assert!(protocol != RESERVED);
 		let ether_type = protocol;		// TODO: this isn't right

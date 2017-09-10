@@ -35,7 +35,7 @@ pub struct UDPHeader
 // See https://en.wikipedia.org/wiki/User_Datagram_Protocol#Packet_structure
 impl UDPHeader
 {
-	pub fn new(src_port: u16, dst_port: u16) -> UDPHeader
+	pub fn new(src_port: u16, dst_port: u16) -> Self
 	{	
 		UDPHeader {
 			src_port,
@@ -95,7 +95,7 @@ pub struct UDPComponent
 
 impl UDPComponent
 {
-	pub fn new(sim: &mut Simulation, parent_id: ComponentID) -> UDPComponent
+	pub fn new(sim: &mut Simulation, parent_id: ComponentID) -> Self
 	{
 		let (id, data) = sim.add_active_component("UDP", parent_id);
 		UDPComponent {

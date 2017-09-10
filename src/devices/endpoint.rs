@@ -40,7 +40,7 @@ pub struct Endpoint
 
 impl Endpoint
 {
-	pub fn new(name: &str, sim: &mut Simulation, parent_id: ComponentID) -> Endpoint
+	pub fn new(name: &str, sim: &mut Simulation, parent_id: ComponentID) -> Self
 	{
 		let id = sim.add_component(name, parent_id);
 
