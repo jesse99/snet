@@ -51,6 +51,48 @@ impl LocalConfig
 	}
 }
 
+fn handle_sender(app: &user::AppComponent, event: &Event, state: &SimState, effector: &mut Effector)
+{
+	match event.name.as_ref() {
+		"init 0" => {
+			log_info!(effector, "init");
+		
+			let info = internet::InternetInfo::new(internet::UDP, common::IPAddress::IPv4([10, 0, 0, 1]), common::IPAddress::IPv4([127, 0, 0, 2]));
+			let options = transport::SocketOptions::with_addr(common::IPAddress::IPv4([127, 0, 0, 2]));
+			let mut packet = common::Packet::new("packet", "#>1");
+			let payload = "hello".to_string();
+			packet.push_bytes(payload.as_bytes());
+			app.upper_out.send_payload_after_secs(effector, "send_down", 1.0, (info, options, packet));
+
+			//let event = Event::new("timer");
+			//effector.schedule_immediately(event, self.id);
+		},		
+		_ => {
+			let cname = &(*state.components).get(app.data.id).name;
+			panic!("component {} can't handle event {}", cname, event.name);
+		}
+	}
+}
+
+fn handle_receiver(app: &user::AppComponent, event: &Event, state: &SimState, effector: &mut Effector)
+{
+	match event.name.as_ref() {
+		"init 0" => {
+			log_info!(effector, "init");
+		
+			//let event = Event::new("timer");
+			//effector.schedule_immediately(event, self.id);
+		},		
+		"send_up" => {
+			log_info!(effector, "received a packet!");
+		},		
+		_ => {
+			let cname = &(*state.components).get(app.data.id).name;
+			panic!("component {} can't handle event {}", cname, event.name);
+		}
+	}
+}
+
 fn create_sim(local: LocalConfig, config: Config) -> Simulation
 {
 	let mut sim = Simulation::new(config);
@@ -58,6 +100,8 @@ fn create_sim(local: LocalConfig, config: Config) -> Simulation
 
 	let mut sender = devices::Endpoint::new("sender", &mut sim, world_id);
 	let mut receiver = devices::Endpoint::new("receiver", &mut sim, world_id);
+	sender.app.callback = Some(handle_sender);
+	receiver.app.callback = Some(handle_receiver);
 	sender.connect(&mut receiver);
 		
 	// This is used by GUIs, e.g. sdebug.

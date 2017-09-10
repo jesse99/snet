@@ -62,7 +62,7 @@ impl IdealMacComponent
 				},
 				"send_down" => {
 					let (_, packet) = event.take_payload::<(IPv4Header, Packet)>();
-					self.lower_out.send_payload(&mut effector, &event.name, packet);
+					self.lower_out.send_payload(&mut effector, "send_up", packet);
 				},
 				"send_up" => {
 					let packet = event.take_payload::<Packet>();
