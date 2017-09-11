@@ -17,19 +17,18 @@
 //! This example sends a packet to a remote endpoint which then sends it back.
 #[macro_use]
 extern crate clap;
-// extern crate rand;
 #[macro_use]
 extern crate score;
 extern crate snet;
 
 use clap::{App, ArgMatches};
-//use rand::{Rng, SeedableRng, StdRng};
 use score::*;
 use snet::*;
 use std::fmt::Display;
 use std::process;
+use std::str;
 use std::str::FromStr;
-//use std::thread;
+use std::thread;
 
 const DISPLAY_WIDTH: f64 = 50.0;
 const DISPLAY_HEIGHT: f64 = 100.0;
@@ -51,7 +50,19 @@ impl LocalConfig
 	}
 }
 
-fn handle_sender(app: &user::AppComponent, event: &Event, state: &SimState, effector: &mut Effector)
+fn rx_packet(event: &mut Event, effector: &mut Effector, expected_payload: &str)
+{
+	let (_, mut packet) = event.take_payload::<(internet::InternetInfo, common::Packet)>();
+	let len = packet.len();
+	let data = packet.pop_bytes(len);
+	match str::from_utf8(data.as_slice()) {
+		Ok(text) if text == expected_payload => log_info!(effector, "received a packet!"),
+		Ok(text) => log_error!(effector, "received a bad packet: '{}'", text),
+		Err(mesg) => log_error!(effector, "received a bad packet: {}", mesg)
+	}
+}
+
+fn handle_sender(app: &user::AppComponent, event: &mut Event, state: &SimState, effector: &mut Effector)
 {
 	match event.name.as_ref() {
 		"init 0" => {
@@ -67,6 +78,16 @@ fn handle_sender(app: &user::AppComponent, event: &Event, state: &SimState, effe
 			//let event = Event::new("timer");
 			//effector.schedule_immediately(event, self.id);
 		},		
+		"send_up" => {
+			rx_packet(event, effector, "echoed hello");
+
+			let count = if state.contains(app.data.id, "num_recv") {state.get_int(app.data.id, "num_recv")} else {0};
+			effector.set_int("num_recv", count+1);
+		
+			let event = Event::new("finished");
+			let (world_id, _) = state.components.get_root();
+			effector.schedule_immediately(event, world_id);
+		},		
 		_ => {
 			let cname = &(*state.components).get(app.data.id).name;
 			panic!("component {} can't handle event {}", cname, event.name);
@@ -74,29 +95,68 @@ fn handle_sender(app: &user::AppComponent, event: &Event, state: &SimState, effe
 	}
 }
 
-fn handle_receiver(app: &user::AppComponent, event: &Event, state: &SimState, effector: &mut Effector)
+fn handle_receiver(app: &user::AppComponent, event: &mut Event, state: &SimState, effector: &mut Effector)
 {
 	match event.name.as_ref() {
 		"init 0" => {
 			log_info!(effector, "init");
-		
-			//let event = Event::new("timer");
-			//effector.schedule_immediately(event, self.id);
 		},		
 		"send_up" => {
-			log_info!(effector, "received a packet!");
+			rx_packet(event, effector, "hello");
+
+			let count = if state.contains(app.data.id, "num_recv") {state.get_int(app.data.id, "num_recv")} else {0};
+			effector.set_int("num_recv", count+1);
+		
+			let info = internet::InternetInfo::new(internet::UDP, common::IPAddress::IPv4([10, 0, 0, 2]), common::IPAddress::IPv4([127, 0, 0, 1]));
+			let options = transport::SocketOptions::with_addr(common::IPAddress::IPv4([127, 0, 0, 1]));
+			let mut packet = common::Packet::new("packet", "#>2");
+			let payload = "echoed hello".to_string();
+			packet.push_bytes(payload.as_bytes());
+			app.upper_out.send_payload_after_secs(effector, "send_down", 1.0, (info, options, packet));
 		},		
 		_ => {
 			let cname = &(*state.components).get(app.data.id).name;
 			panic!("component {} can't handle event {}", cname, event.name);
 		}
 	}
+}
+
+fn world_thread(_local: LocalConfig, data: ThreadData)
+{
+	fn check_eq(effector: &mut Effector, store: &Store, path: &str, expected: i64)
+	{
+		if store.contains(path) {
+			let actual = store.get_int(path);
+			if actual == expected {
+				let message = format!("{} is {}", path, actual);
+				log_info!(effector, &message);
+			} else {
+				let message = format!("{} is {} but {} was expected", path, actual, expected);
+				log_error!(effector, &message);
+			}
+		} else {
+			let message = format!("{} is missing (expected {})", path, expected);
+			log_error!(effector, &message);
+		}
+	}
+
+	thread::spawn(move || {
+		process_events!(data, event, state, effector,
+			"init 0" => {
+			},
+			"finished" => {
+				check_eq(&mut effector, &state.store, "world.receiver.app.num_recv", 1);
+				check_eq(&mut effector, &state.store, "world.sender.app.num_recv", 1);
+			}
+		);
+	});
 }
 
 fn create_sim(local: LocalConfig, config: Config) -> Simulation
 {
 	let mut sim = Simulation::new(config);
-	let world_id = sim.add_component("world", NO_COMPONENT);
+	let (world_id, world_data) = sim.add_active_component("world", NO_COMPONENT);
+	world_thread(local, world_data);
 
 	let mut sender = devices::Endpoint::new("sender", &mut sim, world_id);
 	let mut receiver = devices::Endpoint::new("receiver", &mut sim, world_id);

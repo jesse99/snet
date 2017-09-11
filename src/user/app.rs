@@ -24,7 +24,7 @@ use transport::*;
 // multiple apps on the same device or chain callbacks. This does mean that users cannot
 // pass in closures but users can use the store if they have additional data to pass into
 // their callback.
-pub type AppCallback = fn (app: &AppComponent, event: &Event, state: &SimState, effector: &mut Effector);
+pub type AppCallback = fn (app: &AppComponent, event: &mut Event, state: &SimState, effector: &mut Effector);
 
 /// Component that makes it easy to instal custom code at the top of the network stack.
 pub struct AppComponent
@@ -56,7 +56,7 @@ impl AppComponent
 			for (mut event, state) in self.data.rx.iter() {
 				let mut effector = Effector::new();
 				match self.callback {
-					Some(f) => f(&self, &event, &state, &mut effector),
+					Some(f) => f(&self, &mut event, &state, &mut effector),
 					None => log_warning!(effector, "dropping {} event", event.name),
 				}				
 				drop(state);
