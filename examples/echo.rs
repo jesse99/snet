@@ -65,9 +65,11 @@ fn rx_packet(event: &mut Event, effector: &mut Effector, expected_payload: &str)
 fn handle_sender(app: &user::AppComponent, event: &mut Event, state: &SimState, effector: &mut Effector)
 {
 	match event.name.as_ref() {
-		"init 0" => {
-			log_info!(effector, "init");
-		
+		"init 0" => {		
+			let event = Event::new("timer");
+			effector.schedule_after_secs(event, app.data.id, 1.0);
+		},		
+		"timer" => {		
 			let info = internet::InternetInfo::new(internet::UDP, common::IPAddress::IPv4([10, 0, 0, 1]), common::IPAddress::IPv4([127, 0, 0, 2]));
 			let options = transport::SocketOptions::with_addr(common::IPAddress::IPv4([127, 0, 0, 2]));
 			let mut packet = common::Packet::new("packet", "#>1");
@@ -75,18 +77,24 @@ fn handle_sender(app: &user::AppComponent, event: &mut Event, state: &SimState, 
 			packet.push_bytes(payload.as_bytes());
 			app.upper_out.send_payload_after_secs(effector, "send_down", 1.0, (info, options, packet));
 
-			//let event = Event::new("timer");
-			//effector.schedule_immediately(event, self.id);
+			let sent = if state.contains(app.data.id, "num_sent") {state.get_int(app.data.id, "num_sent")} else {0};
+			effector.set_int("num_sent", sent+1);
 		},		
 		"send_up" => {
 			rx_packet(event, effector, "echoed hello");
 
-			let count = if state.contains(app.data.id, "num_recv") {state.get_int(app.data.id, "num_recv")} else {0};
-			effector.set_int("num_recv", count+1);
+			let recv = if state.contains(app.data.id, "num_recv") {state.get_int(app.data.id, "num_recv")} else {0};
+			effector.set_int("num_recv", recv+1);
 		
-			let event = Event::new("finished");
-			let (world_id, _) = state.components.get_root();
-			effector.schedule_immediately(event, world_id);
+			let to_send = state.store.get_int("world.packets");
+			if recv+1 == to_send {
+				let event = Event::new("finished");
+				let (world_id, _) = state.components.get_root();
+				effector.schedule_immediately(event, world_id);
+			} else {
+				let event = Event::new("timer");
+				effector.schedule_after_secs(event, app.data.id, 1.0);
+			}
 		},		
 		_ => {
 			let cname = &(*state.components).get(app.data.id).name;
@@ -121,7 +129,7 @@ fn handle_receiver(app: &user::AppComponent, event: &mut Event, state: &SimState
 	}
 }
 
-fn world_thread(_local: LocalConfig, data: ThreadData)
+fn world_thread(local: &LocalConfig, data: ThreadData)
 {
 	fn check_eq(effector: &mut Effector, store: &Store, path: &str, expected: i64)
 	{
@@ -140,13 +148,14 @@ fn world_thread(_local: LocalConfig, data: ThreadData)
 		}
 	}
 
+	let packets = local.packets as i64;
 	thread::spawn(move || {
 		process_events!(data, event, state, effector,
 			"init 0" => {
 			},
 			"finished" => {
-				check_eq(&mut effector, &state.store, "world.receiver.app.num_recv", 1);
-				check_eq(&mut effector, &state.store, "world.sender.app.num_recv", 1);
+				check_eq(&mut effector, &state.store, "world.receiver.app.num_recv", packets);
+				check_eq(&mut effector, &state.store, "world.sender.app.num_recv", packets);
 			}
 		);
 	});
@@ -156,7 +165,7 @@ fn create_sim(local: LocalConfig, config: Config) -> Simulation
 {
 	let mut sim = Simulation::new(config);
 	let (world_id, world_data) = sim.add_active_component("world", NO_COMPONENT);
-	world_thread(local, world_data);
+	world_thread(&local, world_data);
 
 	let mut sender = devices::Endpoint::new("sender", &mut sim, world_id);
 	let mut receiver = devices::Endpoint::new("receiver", &mut sim, world_id);
@@ -166,6 +175,7 @@ fn create_sim(local: LocalConfig, config: Config) -> Simulation
 		
 	// This is used by GUIs, e.g. sdebug.
 	let mut effector = Effector::new();
+	effector.set_int("packets", local.packets as i64);
 	effector.set_float("display-size-x", DISPLAY_WIDTH);
 	effector.set_float("display-size-y", DISPLAY_HEIGHT);
 	effector.set_string("display-title", "echo");
