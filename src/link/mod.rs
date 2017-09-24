@@ -17,7 +17,11 @@
 //! This is the layer responsible for routing frames towards an endpoint.
 pub use self::ideal_mac::*;
 pub use self::link::*;
+pub use self::link_helpers::*;
+pub use self::mac80211::*;
 
 mod ideal_mac;
 mod link;
+mod link_helpers;
+mod mac80211;
 

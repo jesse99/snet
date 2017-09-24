@@ -14,20 +14,32 @@
 // along with this program; if not, write to the Free Software Foundation,
 // Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 use common::*;
-//use internet::protocol_numbers::*;
-// use score::*;
-// use std::str;
-// use std::thread;
+
+/// QoS is a big mess and the semantics have changed from ToS to QoS to DSCP. We follow
+/// mac82011's lead (see https://wireless.wiki.kernel.org/en/developers/documentation/mac80211/queues)
+/// and map QoS to one of four queues which each have different priority levels.
+#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
+pub enum QoS	// See 8.4.2.31 EDCA Parameter Set element 
+{
+	/// Lowest priority
+	Background = 32,
+
+	/// Default priority
+	BestEffort = 0,
+
+	// High priority
+	Video = 128,
+
+	// Highest priority
+	Voice = 192,
+}
 
 // See http://man7.org/linux/man-pages/man7/ip.7.html and https://linux.die.net/man/7/socket
 pub struct SocketOptions
 {
-	/// This controls packet precedence when the MAC queues start backing up. 0 is the default
-	/// priority, 1 is the lowest priority, 2 == 0, 3 has priority over default, 4 has even more
-	/// priority, up to 7 which is the highst priority. Note that this is used in place of TOS
-	/// and DSCP (which is what Linux does, see http://linuxwireless.org/en/developers/Documentation/qos 
-	/// for more details). Equivalent to Linux's SO_PRIORITY option.
-	pub priority: u8,
+	/// This controls packet precedence when the MAC queues start backing up. Equivalent to 
+	/// Linux's SO_PRIORITY option.
+	pub qos: QoS,
 		
 	/// Time to live: maximum number of hops the packet is allowed to travel. Defaults to 255
 	/// for unicast and 1 for multicast (which is what Linux 2.4 does). Equivalent to Linux's
@@ -59,7 +71,7 @@ impl SocketOptions
 {
 	pub fn with_addr(_: IPAddress) -> Self
 	{	
-		SocketOptions{priority: 0, ttl: 255, dont_fragment: false}	// TODO: set ttl to 1 for multicast
+		SocketOptions{qos: QoS::BestEffort, ttl: 255, dont_fragment: false}	// TODO: set ttl to 1 for multicast
 	}
 }
 

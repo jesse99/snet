@@ -74,7 +74,7 @@ fn handle_sender(app: &user::AppComponent, event: &mut Event, state: &SimState, 
 			let options = transport::SocketOptions::with_addr(common::IPAddress::IPv4([127, 0, 0, 2]));
 			let mut packet = common::Packet::new("packet", "#>1");
 			let payload = "hello".to_string();
-			packet.push_bytes(payload.as_bytes());
+			packet.push_back_bytes(payload.as_bytes());
 			app.upper_out.send_payload_after_secs(effector, "send_down", 1.0, (info, options, packet));
 
 			let sent = if state.contains(app.data.id, "num_sent") {state.get_int(app.data.id, "num_sent")} else {0};
@@ -119,7 +119,7 @@ fn handle_receiver(app: &user::AppComponent, event: &mut Event, state: &SimState
 			let options = transport::SocketOptions::with_addr(common::IPAddress::IPv4([127, 0, 0, 1]));
 			let mut packet = common::Packet::new("packet", "#>2");
 			let payload = "echoed hello".to_string();
-			packet.push_bytes(payload.as_bytes());
+			packet.push_back_bytes(payload.as_bytes());
 			app.upper_out.send_payload_after_secs(effector, "send_down", 1.0, (info, options, packet));
 		},		
 		_ => {

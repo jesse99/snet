@@ -66,7 +66,7 @@ impl IdealMacComponent
 				},
 				"send_up" => {
 					let packet = event.take_payload::<Packet>();
-					let linfo = LinkInfo::new(0, 0, 0);	// TODO: need to push and pop this
+					let linfo = LinkInfo::new(0, &[0, 0, 0, 0, 0, 0], &[0, 0, 0, 0, 0, 0]);	// TODO: need to push and pop this
 					self.upper_out.send_payload(&mut effector, &event.name, (linfo, packet));
 				}
 			);

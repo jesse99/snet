@@ -16,22 +16,22 @@
 use std::ops::Index;
 
 /// Returns the Internet checksum.
-pub fn checksum<I>(bytes: &I, len: usize) -> u16
+pub fn checksum<I>(bytes: &I, offset: usize, len: usize) -> u16
 	where I: Index<usize, Output=u8>
 {
 	// Based on section 4.1 in https://tools.ietf.org/html/rfc1071
 	let mut sum: i32 = 0;
 
 	// Add each 16-bit word
-	let mut i = 0;
-	while i+1 < len {
+	let mut i = offset;
+	while i+1 < offset+len {
 		let word = (*bytes.index(i) as u16) << 8 | (*bytes.index(i+1) as u16);
 		sum = sum.wrapping_add(word as i32);
 		i += 2;
 	}
 
 	// Add the left over byte if it exists.
-	if i < len {
+	if i < offset+len {
 		let word = *bytes.index(i) as u16;
 		sum = sum.wrapping_add(word as i32);
 	}

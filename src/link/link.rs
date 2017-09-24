@@ -20,6 +20,8 @@ use internet::*;
 // use std::thread;
 //use transport::socket::*;
 
+pub type MacAddress = [u8; 6];
+
 /// This, and and [`Packet`], are the types used to communicate between
 /// the internet and link layers.
 pub struct LinkInfo
@@ -28,18 +30,18 @@ pub struct LinkInfo
 	pub ether_type: u8,	// TODO: use an enum for this
 	
 	/// The sender of the packet.
-	pub src_addr: u64,	// TODO: use a real type
+	pub src_addr: MacAddress,
 	
 	/// The destination of the packet.
-	pub dst_addr: u64,
+	pub dst_addr: MacAddress,
 }
 
 impl LinkInfo
 {
-	pub fn new(protocol: u8, src_addr: u64, dst_addr: u64) -> Self
+	pub fn new(protocol: u8, src_addr: &MacAddress, dst_addr: &MacAddress) -> Self
 	{	
 		assert!(protocol != RESERVED);
 		let ether_type = protocol;		// TODO: this isn't right
-		LinkInfo {ether_type, src_addr, dst_addr}
+		LinkInfo {ether_type, src_addr: *src_addr, dst_addr: *dst_addr}
 	}
 }

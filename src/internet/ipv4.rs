@@ -16,10 +16,9 @@
 use common::*;
 use internet::internet::*;
 use internet::protocol_numbers::*;
-//use internet::upper_internet::*;
 use link::*;
 use score::*;
-use std::str;
+//use std::str;
 use std::thread;
 use std::u16;
 use transport::*;
@@ -68,10 +67,21 @@ pub struct IPv4Header
 	pub identification: u16,
 }
 
+// See the DSCP section of https://wireless.wiki.kernel.org/en/developers/documentation/mac80211/queues
+fn qos_to_dscp(qos: QoS) -> u8
+{
+	match qos {
+		QoS::Background => 0b001 << 2,	// TODO: lower two bits are ECN
+		QoS::BestEffort => 0b000 << 2,
+		QoS::Video      => 0b100 << 2,
+		QoS::Voice      => 0b110 << 2,
+	}
+}
+
 // See https://en.wikipedia.org/wiki/IPv4#Packet_structure
 impl IPv4Header
 {
-	pub fn new(protocol: u8, src_addr: [u8; 4], dst_addr: [u8; 4], options: &SocketOptions) -> IPv4Header
+	pub fn new(protocol: u8, src_addr: [u8; 4], dst_addr: [u8; 4], options: &SocketOptions) -> Self
 	{	
 		assert!(protocol != RESERVED);
 
@@ -79,7 +89,7 @@ impl IPv4Header
 			protocol,
 			src_addr,
 			dst_addr,
-			dscp: options.priority,
+			dscp: qos_to_dscp(options.qos),
 			ecn: ECN::NotCapable,	// TODO: TCP should set this, I guess with SocketOptions
 			ttl: options.ttl,
 			dont_fragment: options.dont_fragment,
@@ -99,7 +109,7 @@ impl IPv4Header
 							protocol: info.protocol,
 							src_addr,
 							dst_addr,
-							dscp: options.priority,
+							dscp: qos_to_dscp(options.qos),
 							ecn: ECN::NotCapable,	// TODO: TCP should set this, I guess with SocketOptions
 							ttl: options.ttl,
 							dont_fragment: options.dont_fragment,
@@ -145,12 +155,12 @@ impl IPv4Header
 		let hw = 0;							// checksum (this is set for real after we've pushed the header)
 		header.push16(hw);
 
-		header.push8(self.src_addr[0]);	// source IP
+		header.push8(self.src_addr[0]);		// source IP
 		header.push8(self.src_addr[1]);
 		header.push8(self.src_addr[2]);
 		header.push8(self.src_addr[3]);
 
-		header.push8(self.dst_addr[0]);	// destination IP
+		header.push8(self.dst_addr[0]);		// destination IP
 		header.push8(self.dst_addr[1]);
 		header.push8(self.dst_addr[2]);
 		header.push8(self.dst_addr[3]);
@@ -158,7 +168,6 @@ impl IPv4Header
 		let crc = header.checksum();
 		header.data[10] = (crc >> 8) as u8;
 		header.data[11] = (crc & 0xFF) as u8;	
-		//println!("header = {:?}", header);
 
 		packet.push_header(&header);
 	}

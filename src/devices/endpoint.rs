@@ -35,7 +35,7 @@ pub struct Endpoint
 
 	pub app: AppComponent,
 	pub ipv4: IPv4Component,	// TODO: should be InternetComponent
-	pub mac: IdealMacComponent,
+	pub mac: Mac80211Component,
 }
 
 impl Endpoint
@@ -46,7 +46,7 @@ impl Endpoint
 
 		let app = AppComponent::new(sim, id);
 		let ipv4 = IPv4Component::new(sim, id);
-		let mac = IdealMacComponent::new(sim, id);
+		let mac = Mac80211Component::new(sim, id);
 		Endpoint {
 			name: name.to_string(),
 			id,

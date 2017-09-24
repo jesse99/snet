@@ -39,7 +39,8 @@ impl Packet
 		assert!(!name.is_empty());
 		assert!(!id.is_empty());
 
-		let payload = VecDeque::with_capacity(32);
+		let payload = VecDeque::with_capacity(2048);	// we use a large capacity because of https://github.com/rust-lang/rust/issues/44800, TODO: this might break once we start aggregating frames
+//		let payload = VecDeque::with_capacity(32);
 		Packet{name: name.to_string(), id: id.to_string(), payload, offset: 0}
 	}
 
@@ -64,7 +65,7 @@ impl Packet
 	}
 
 	/// Packet data in network endian byte order.
-	pub fn payload(&self) -> &VecDeque<u8>
+	pub fn payload(&self) -> &VecDeque<u8>	// TODO: doesn't seem like a good idea to expose this
 	{
 		&self.payload
 	}
@@ -92,11 +93,11 @@ impl Packet
 	}
 
 	/// Apps can use this to push payloads onto a packet.
-	pub fn push_bytes(&mut self, data: &[u8])
+	pub fn push_back_bytes(&mut self, data: &[u8])
 	{
 		assert!(self.offset == 0, "mixing pushs and pops isn't supported");
 
-		self.payload.extend(data);
+		self.payload.extend(data.iter());
 	}
 
 	/// Removes data from the front of the payload.
@@ -134,9 +135,15 @@ impl Packet
 		result
 	}
 
+	/// Removes data from the back of the payload.
+	pub fn pop_back8(&mut self) -> u8
+	{
+		self.payload.pop_back().unwrap()
+	}
+
 	pub fn checksum(&self, len: usize) -> u16
 	{
-		super::checksum::checksum(&self.payload, len)
+		super::checksum::checksum(&self.payload, self.offset, len)
 	}
 }
 
@@ -185,7 +192,7 @@ impl Header
 
 	pub fn checksum(&self) -> u16
 	{
-		super::checksum::checksum(&self.data, self.data.len())
+		super::checksum::checksum(&self.data, 0, self.data.len())
 	}
 }
 
