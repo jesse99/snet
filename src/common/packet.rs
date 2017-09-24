@@ -13,6 +13,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software Foundation,
 // Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+use std::iter::Skip;
+use std::collections::vec_deque;
 use std::collections::VecDeque;
 use std::fmt;
 
@@ -64,21 +66,24 @@ impl Packet
 		&self.id
 	}
 
-	/// Packet data in network endian byte order.
-	pub fn payload(&self) -> &VecDeque<u8>	// TODO: doesn't seem like a good idea to expose this
-	{
-		&self.payload
-	}
-
 	/// Returns true if all of the payload has been popped off.
 	pub fn is_empty(&mut self) -> bool
 	{
+		assert!(self.offset <= self.payload.len());
 		self.offset == self.payload.len()
 	}
 
 	pub fn len(&self) -> usize
 	{
+		assert!(self.offset <= self.payload.len());
 		self.payload.len() - self.offset
+	}
+
+	/// Packet data in network endian byte order.
+	pub fn iter(&self) -> Skip<vec_deque::Iter<u8>>
+	{
+		assert!(self.offset <= self.payload.len());
+		self.payload.iter().skip(self.offset)
 	}
 
 	/// This is what components within the network stack use.
@@ -127,7 +132,6 @@ impl Packet
 	pub fn pop_bytes(&mut self, len: usize) -> Vec<u8>
 	{
 		let mut result = Vec::with_capacity(len);
-
 		for _ in 0..len {
 			result.push(self.pop8());
 		}
