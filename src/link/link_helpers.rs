@@ -24,7 +24,7 @@ use common::*;
 // use std::u16;
 // use transport::socket::*;
 
-// This was generated with:
+// CRC_TABLE was generated with:
 // #include <stdio.h>
 
 // int main()
@@ -49,24 +49,14 @@ const CRC_TABLE: [u32; 256] = [0, 1996959894, 3993919788, 2567524794, 124634137,
 pub fn crc32(packet: &Packet) -> u32
 {
 	// This is based on crc32c from http://www.hackersdelight.org/hdcodetxt/crc.c.txt
-	// let mut crc = 0xFFFFFFFF;
-	// for i in 0..packet.payload().len() {
-	// 	let byte = *packet.payload().get(i).unwrap() as u32;
-	// 	let index = ((crc ^ byte) & 0xFF) as usize;
-	// 	crc = (crc >> 8) ^ CRC_TABLE[index]
-	// }
-	// !crc
-
-	// TODO: This is the version we should be using but it was causing panics inside VecDeque.
-	// A version using iter but not fold infinitely looped (tho with a 51 byte packet it
-	// seemed to exit correctly when an if statement was added to break after 150 iterations).
-	!packet.payload().iter().fold(0xFFFFFFFF, |crc, &b| {
+	!packet.iter().fold(0xFFFFFFFF, |crc, &b| {
 		let byte = b as u32;
 		let index = ((crc ^ byte) & 0xFF) as usize;
 		(crc >> 8) ^ CRC_TABLE[index]
 	})
 }
 
+//// Reverses (reflects) bits in a 32-bit word.
 pub fn reverse32(mut x: u32) -> u32 
 {
    x = ((x & 0x55555555) <<  1) | ((x >>  1) & 0x55555555);
