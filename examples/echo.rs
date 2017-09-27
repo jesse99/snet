@@ -173,13 +173,23 @@ fn create_sim(local: LocalConfig, config: Config) -> Simulation
 	receiver.app.callback = Some(handle_receiver);
 	sender.connect(&mut receiver);
 		
-	// This is used by GUIs, e.g. sdebug.
-	let mut effector = Effector::new();
-	effector.set_int("packets", local.packets as i64);
-	effector.set_float("display-size-x", DISPLAY_WIDTH);
-	effector.set_float("display-size-y", DISPLAY_HEIGHT);
-	effector.set_string("display-title", "echo");
-	sim.apply(world_id, effector);
+	sim.configure(|id, component, components, effector| {
+		match component.name.as_ref() {
+			"world" => {
+				// This is used by GUIs, e.g. sdebug.
+				effector.set_int("packets", local.packets as i64);
+				effector.set_float("display-size-x", DISPLAY_WIDTH);
+				effector.set_float("display-size-y", DISPLAY_HEIGHT);
+				effector.set_string("display-title", "echo");
+			},
+			"pcap" => {
+				// Save off a pcap file for each device.
+				let (_, top) = components.get_top(id);
+				effector.set_string("path", &(top.name.clone() + ".pcap"));
+			},
+			_ => {}
+		}
+	});
 
 	// and spin up their threads.
 	sender.start(&mut sim);

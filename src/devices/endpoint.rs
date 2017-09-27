@@ -36,6 +36,7 @@ pub struct Endpoint
 	pub app: AppComponent,
 	pub ipv4: IPv4Component,	// TODO: should be InternetComponent
 	pub mac: Mac80211Component,
+	pub pcap: PcapComponent,
 }
 
 impl Endpoint
@@ -47,12 +48,14 @@ impl Endpoint
 		let app = AppComponent::new(sim, id);
 		let ipv4 = IPv4Component::new(sim, id);
 		let mac = Mac80211Component::new(sim, id);
+		let pcap = PcapComponent::new(sim, id);
 		Endpoint {
 			name: name.to_string(),
 			id,
 			app,
 			ipv4,
 			mac,
+			pcap,
 		}
 	}
 
@@ -64,11 +67,15 @@ impl Endpoint
 
 		self.ipv4.lower_out.connect_to(&self.mac.upper_in);
 		self.mac.upper_out.connect_to(&self.ipv4.lower_in);
+
+		self.mac.lower_out.connect_to(&self.pcap.upper_in);
+		self.pcap.upper_out.connect_to(&self.mac.lower_in);
 	
 		// Spin up the threads.
 		self.app.start();
 		self.ipv4.start();
 		self.mac.start();
+		self.pcap.start();
 		
 		// Set our state.
 		let mut effector = Effector::new();
@@ -83,7 +90,7 @@ impl Endpoint
 
 	pub fn connect(&mut self, other: &mut Endpoint)
 	{
-		self.mac.lower_out.connect_to(&other.mac.lower_in);
-		other.mac.lower_out.connect_to(&self.mac.lower_in);
+		self.pcap.lower_out.connect_to(&other.pcap.lower_in);
+		other.pcap.lower_out.connect_to(&self.pcap.lower_in);
 	}
 }
