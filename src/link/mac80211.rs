@@ -75,7 +75,7 @@ impl Mac80211DataFrame
 	{
 		let mut header = Header::with_capacity(30);
 
-		let hw = 0b1000_10_00;		// frame control, see 9.2.4.1 
+		let hw = 0b1000_10_00_00000000;		// frame control, see 9.2.4.1, note that B0 is the low bit in the first byte
 		header.push16(hw);
 
 		let hw = 0;					// duration/ID, see 9.2.4.2
@@ -96,7 +96,7 @@ impl Mac80211DataFrame
 		let hw = self.seq_num << 4;	// sequence control, see 9.2.4.4.1
 		header.push16(hw);
 
-		let hw = 0b111_0_00_0_000;	// QoS control, see 9.2.4.5.1
+		let hw = 0b0_11_0_0000_00000000;	// QoS control, see 9.2.4.5.1
 		header.push16(hw);
 
 		packet.push_header(&header);

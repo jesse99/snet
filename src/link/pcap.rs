@@ -66,7 +66,6 @@ impl PcapComponent
 	{
 		let mut file = Err(io::Error::new(io::ErrorKind::Other, "no path"));
 		let mut result = Ok(());
-//		let mut file: io::Result<fs::File>  = Err(io::Error::new(io::ErrorKind::Other, "no path"));
 		let mut snap_length = 65535;
 
 		thread::spawn(move || {
