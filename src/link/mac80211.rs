@@ -75,35 +75,35 @@ impl Mac80211DataFrame
 	{
 		let mut header = Header::with_capacity(30);
 
-		let hw = 0b1000_10_00_00000000;		// frame control, see 9.2.4.1, note that B0 is the low bit in the first byte
+		let hw = 0b1000_10_00_00000000;	// frame control, see 9.2.4.1, note that B0 is the low bit in the first byte
 		header.push16(hw);
 
-		let hw = 0;					// duration/ID, see 9.2.4.2
+		let hw = 0;						// duration/ID, see 9.2.4.2
 		header.push16(hw);
 
-		for &b in self.da.iter() {	// address 1, see 9.3.2.1
+		for &b in self.da.iter() {		// address 1, see 9.3.2.1
 			header.push8(b);
 		}
 
-		for &b in self.sa.iter() {	// address 2
+		for &b in self.sa.iter() {		// address 2
 			header.push8(b);
 		}
 
-		for &b in self.bssid.iter() {// address 3
+		for &b in self.bssid.iter() {	// address 3
 			header.push8(b);
 		}
 
-		let hw = self.seq_num << 4;	// sequence control, see 9.2.4.4.1
+		let hw = self.seq_num << 4;		// sequence control, see 9.2.4.4.1
 		header.push16(hw);
 
-		let hw = 0b0_11_0_0000_00000000;	// QoS control, see 9.2.4.5.1
+		let hw = 0b0_11_0_0000_00000000;// QoS control, see 9.2.4.5.1
 		header.push16(hw);
 
 		packet.push_header(&header);
 
 		// Note that 802.3 has a minimum frame body size but 802.11 does not.
 
-		let crc = crc32(packet);	// FCS (which is always little endian)
+		let crc = crc32(packet);		// FCS (which is always little endian)
 		let fcs = [(crc & 0xFF) as u8, (crc >> 8 & 0xFF) as u8, (crc >> 16 & 0xFF) as u8, (crc >> 24 & 0xFF) as u8];
 		packet.push_back_bytes(&fcs);
 	}

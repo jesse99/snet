@@ -140,19 +140,21 @@ impl PcapComponent
 	}
 }
 
+const LINKTYPE_IEEE802_11: u32 = 105;		// this is equivalent to a monitor mode tcpdump
+
 // It doesn't matter what byte order we write this stuff out as, it only matters that we are consistent.
 // So we'll just write them out as little endian because that seems to be what most hardware uses nowadays.
 // See https://wiki.wireshark.org/Development/LibpcapFileFormat for more.
 fn write_global_header<W>(writer: &mut W, snap_length: u32) -> io::Result<()>
 	where W: io::Write
 {
-	try!(write_u32(writer, 0xa1b2c3d4));	// magic number
-	try!(write_u16(writer, 2));				// major version number
-	try!(write_u16(writer, 4));				// minor version number
-	try!(write_u32(writer, 0));				// timezone correction, 0 because our timestamps are GMT
-	try!(write_u32(writer, 0));				// timestamp accuracy, all tools set this to zero
-	try!(write_u32(writer, snap_length));	// max bytes to record within a packet
-	try!(write_u32(writer, 105));			// link layer header type, this is LINKTYPE_IEEE802_11, see http://www.tcpdump.org/linktypes.html for more
+	try!(write_u32(writer, 0xa1b2c3d4));			// magic number
+	try!(write_u16(writer, 2));						// major version number
+	try!(write_u16(writer, 4));						// minor version number
+	try!(write_u32(writer, 0));						// timezone correction, 0 because our timestamps are GMT
+	try!(write_u32(writer, 0));						// timestamp accuracy, all tools set this to zero
+	try!(write_u32(writer, snap_length));			// max bytes to record within a packet
+	try!(write_u32(writer, LINKTYPE_IEEE802_11));	// link layer header type, see http://www.tcpdump.org/linktypes.html for more
 	Ok(())
 }
 
