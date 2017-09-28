@@ -79,6 +79,11 @@ impl Packet
 		self.payload.len() - self.offset
 	}
 
+	pub fn get(&self, index: usize) -> u8
+	{
+		self.payload[index + self.offset]
+	}
+
 	/// Packet data in network endian byte order.
 	pub fn iter(&self) -> Skip<vec_deque::Iter<u8>>
 	{

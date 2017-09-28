@@ -1,5 +1,6 @@
 #[macro_use]
 extern crate score;
+extern crate time;
 
 pub mod common;
 pub mod devices;
