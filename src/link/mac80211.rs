@@ -161,7 +161,7 @@ pub struct Mac80211Component
 
 	/// Listens for "send_up" events.
 	pub lower_in: InPort<Packet>,
-	pub lower_out: OutPort<Packet>,
+	pub lower_out: OutPort<(ComponentID, Packet)>,
 }
 
 impl Mac80211Component
@@ -194,7 +194,7 @@ impl Mac80211Component
 					let (ipv4, mut packet) = event.take_payload::<(IPv4Header, Packet)>();
 					let header = Mac80211DataFrame::new(&ipv4, sn as u16);
 					header.push(&mut packet);
-					self.lower_out.send_payload(&mut effector, &event.name, packet);
+					self.lower_out.send_payload(&mut effector, &event.name, (self.data.id, packet));
 				},
 				"send_up" => {
 					let mut packet = event.take_payload::<Packet>();
@@ -208,6 +208,5 @@ impl Mac80211Component
 				}
 			);
 		});
-		println!("exiting mac");
 	}
 }

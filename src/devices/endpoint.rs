@@ -17,6 +17,7 @@
 use internet::*;
 //use internet::protocol_numbers::*;
 use link::*;
+use physical::*;
 use score::*;
 // use std::str;
 //use std::thread;
@@ -36,6 +37,7 @@ pub struct Endpoint
 	pub app: AppComponent,
 	pub ipv4: IPv4Component,	// TODO: should be InternetComponent
 	pub mac: Mac80211Component,
+
 	pub pcap: PcapComponent,
 }
 
@@ -55,11 +57,12 @@ impl Endpoint
 			app,
 			ipv4,
 			mac,
+
 			pcap,
 		}
 	}
 
-	pub fn start(mut self, sim: &mut Simulation)
+	pub fn start(mut self, sim: &mut Simulation, medium: &mut Medium80211Component)	// TODO: use a trait for the medium
 	{
 		// Wire together the components.
 		self.app.upper_out.connect_to(&self.ipv4.upper_in);
@@ -68,8 +71,10 @@ impl Endpoint
 		self.ipv4.lower_out.connect_to(&self.mac.upper_in);
 		self.mac.upper_out.connect_to(&self.ipv4.lower_in);
 
-		self.mac.lower_out.connect_to(&self.pcap.upper_in);
-		self.pcap.upper_out.connect_to(&self.mac.lower_in);
+//		self.mac.lower_out.connect_to(&self.pcap.upper_in);
+//		self.pcap.upper_out.connect_to(&self.mac.lower_in);
+
+		medium.connect(&mut self.mac.lower_out, &self.mac.lower_in);
 	
 		// Spin up the threads.
 		self.app.start();

@@ -166,6 +166,8 @@ fn create_sim(local: LocalConfig, config: Config) -> Simulation
 	let mut sim = Simulation::new(config);
 	let (world_id, world_data) = sim.add_active_component("world", NO_COMPONENT);
 	world_thread(&local, world_data);
+	
+	let mut medium = physical::Medium80211Component::new(&mut sim, world_id);
 
 	let mut sender = devices::Endpoint::new("sender", &mut sim, world_id);
 	let mut receiver = devices::Endpoint::new("receiver", &mut sim, world_id);
@@ -192,8 +194,9 @@ fn create_sim(local: LocalConfig, config: Config) -> Simulation
 	});
 
 	// and spin up their threads.
-	sender.start(&mut sim);
-	receiver.start(&mut sim);
+	sender.start(&mut sim, &mut medium);
+	receiver.start(&mut sim, &mut medium);
+	medium.start();
 	
 	sim
 }

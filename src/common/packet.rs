@@ -20,6 +20,7 @@ use std::fmt;
 
 /// A sequence of bytes sent down the network stack, over a wire or the air,
 /// and back up the network stack.
+#[derive(Clone)]
 pub struct Packet
 {
 	name: String,
