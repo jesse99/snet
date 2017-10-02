@@ -173,7 +173,6 @@ fn create_sim(local: LocalConfig, config: Config) -> Simulation
 	let mut receiver = devices::Endpoint::new("receiver", &mut sim, world_id);
 	sender.app.callback = Some(handle_sender);
 	receiver.app.callback = Some(handle_receiver);
-	sender.connect(&mut receiver);
 		
 	sim.configure(|id, component, components, effector| {
 		match component.name.as_ref() {

@@ -35,13 +35,9 @@ pub struct PcapComponent
 {
 	data: ThreadData,
 
-	/// Listens for "send_down" events.
-	pub upper_in: InPort<Packet>,	
-	pub upper_out: OutPort<Packet>,
-
-	/// Listens for "send_up" events.
-	pub lower_in: InPort<Packet>,
-	pub lower_out: OutPort<Packet>,
+	/// Packet should start with a Mac80211DataFrame header. This is similar to a monitor mode tcpdump.
+	/// Listens for send_ieee80211,
+	pub ieee80211_in: InPort<Packet>,	
 }
 
 // TODO: add direction setting? tcpdump uses in, out, and inout for the values
@@ -53,12 +49,7 @@ impl PcapComponent
 		let (id, data) = sim.add_active_component("pcap", parent_id);
 		PcapComponent {
 			data: data,
-
-			upper_in: InPort::with_port_name(id, "upper_in"),
-			lower_out: OutPort::new(),
-
-			lower_in: InPort::with_port_name(id, "lower_in"),
-			upper_out: OutPort::new(),
+			ieee80211_in: InPort::with_port_name(id, "ieee80211_in"),
 		}
 	}
 	
@@ -99,29 +90,16 @@ impl PcapComponent
 					}
 					effector.set_int("frame", 0);
 				},
-				"send_down" => {
-					let packet = event.take_payload::<Packet>();
+				"send_ieee80211" => {
 					if let Ok(ref mut f) = file {
 						if result.is_ok() {
+							let packet = event.take_payload::<Packet>();
 							result = self.write_frame(f, &mut effector, &state, &packet, snap_length);
 							if let Err(ref e) = result {
 								log_error!(effector, "failed to write a frame: {:?}", *e);
 							}
 						}
 					}
-					self.lower_out.send_payload(&mut effector, "send_up", packet);
-				},
-				"send_up" => {
-					let packet = event.take_payload::<Packet>();
-					if let Ok(ref mut f) = file {
-						if result.is_ok() {
-							result = self.write_frame(f, &mut effector, &state, &packet, snap_length);
-							if let Err(ref e) = result {
-								log_error!(effector, "failed to write a frame: {:?}", *e);
-							}
-						}
-					}
-					self.upper_out.send_payload(&mut effector, &event.name, packet);
 				}
 			);
 		});
@@ -140,7 +118,7 @@ impl PcapComponent
 	}
 }
 
-const LINKTYPE_IEEE802_11: u32 = 105;		// this is equivalent to a monitor mode tcpdump
+const LINKTYPE_IEEE802_11: u32 = 105;
 
 // It doesn't matter what byte order we write this stuff out as, it only matters that we are consistent.
 // So we'll just write them out as little endian because that seems to be what most hardware uses nowadays.

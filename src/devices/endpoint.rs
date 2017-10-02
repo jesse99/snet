@@ -71,9 +71,7 @@ impl Endpoint
 		self.ipv4.lower_out.connect_to(&self.mac.upper_in);
 		self.mac.upper_out.connect_to(&self.ipv4.lower_in);
 
-//		self.mac.lower_out.connect_to(&self.pcap.upper_in);
-//		self.pcap.upper_out.connect_to(&self.mac.lower_in);
-
+		self.mac.pcap_out.connect_to(&self.pcap.ieee80211_in);
 		medium.connect(&mut self.mac.lower_out, &self.mac.lower_in);
 	
 		// Spin up the threads.
@@ -91,11 +89,5 @@ impl Endpoint
 			effector.set_float("display-location-y", START_Y + DY*(root.children.len()) as f64);
 		}
 		sim.apply(self.id, effector);
-	}
-
-	pub fn connect(&mut self, other: &mut Endpoint)
-	{
-		self.pcap.lower_out.connect_to(&other.pcap.lower_in);
-		other.pcap.lower_out.connect_to(&self.pcap.lower_in);
 	}
 }

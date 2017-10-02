@@ -162,6 +162,8 @@ pub struct Mac80211Component
 	/// Listens for "send_up" events.
 	pub lower_in: InPort<Packet>,
 	pub lower_out: OutPort<(ComponentID, Packet)>,
+
+	pub pcap_out: OutPort<Packet>,
 }
 
 impl Mac80211Component
@@ -177,6 +179,8 @@ impl Mac80211Component
 
 			lower_in: InPort::with_port_name(id, "lower_in"),
 			upper_out: OutPort::new(),
+
+			pcap_out: OutPort::new(),
 		}
 	}
 	
@@ -194,10 +198,12 @@ impl Mac80211Component
 					let (ipv4, mut packet) = event.take_payload::<(IPv4Header, Packet)>();
 					let header = Mac80211DataFrame::new(&ipv4, sn as u16);
 					header.push(&mut packet);
+					self.pcap_out.send_payload(&mut effector, "send_ieee80211", packet.clone());
 					self.lower_out.send_payload(&mut effector, &event.name, (self.data.id, packet));
 				},
 				"send_up" => {
 					let mut packet = event.take_payload::<Packet>();
+					self.pcap_out.send_payload(&mut effector, "send_ieee80211", packet.clone());
 					match Mac80211DataFrame::pop(&mut packet) {
 						Ok(header) => {
 							let linfo = LinkInfo::new(0, &header.sa, &header.da);	// TODO: not sure what to do with ether_type since it's not present in 802.11
