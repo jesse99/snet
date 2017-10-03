@@ -15,7 +15,7 @@
 // Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 use common::*;
 use internet::ipv4::*;
-use internet::protocol_numbers::*;
+use internet::protocol::*;
 use score::*;
 // use std::str;
 use std::thread;
@@ -26,7 +26,7 @@ use transport::*;
 pub struct InternetInfo
 {
 	/// TCP, UDP, IGMP, OSPF, etc.
-	pub protocol: u8,
+	pub protocol: Protocol,
 	
 	/// The sender of the packet.
 	pub src_addr: IPAddress,
@@ -37,9 +37,8 @@ pub struct InternetInfo
 
 impl InternetInfo
 {
-	pub fn new(protocol: u8, src_addr: IPAddress, dst_addr: IPAddress) -> Self
+	pub fn new(protocol: Protocol, src_addr: IPAddress, dst_addr: IPAddress) -> Self
 	{	
-		assert!(protocol != RESERVED);
 		InternetInfo {protocol, src_addr, dst_addr}
 	}
 }

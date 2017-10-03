@@ -15,7 +15,7 @@
 // Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 use common::*;
 use internet::internet::*;
-use internet::protocol_numbers::*;
+use internet::protocol::*;
 use link::*;
 use score::*;
 //use std::str;
@@ -36,7 +36,7 @@ pub enum ECN
 pub struct IPv4Header
 {
 	/// TCP, UDP, IGMP, OSPF, etc.
-	pub protocol: u8,
+	pub protocol: Protocol,
 	
 	/// The sender of the packet.
 	pub src_addr: [u8; 4],
@@ -81,9 +81,9 @@ fn qos_to_dscp(qos: QoS) -> u8
 // See https://en.wikipedia.org/wiki/IPv4#Packet_structure
 impl IPv4Header
 {
-	pub fn new(protocol: u8, src_addr: [u8; 4], dst_addr: [u8; 4], options: &SocketOptions) -> Self
+	pub fn new(protocol: Protocol, src_addr: [u8; 4], dst_addr: [u8; 4], options: &SocketOptions) -> Self
 	{	
-		assert!(protocol != RESERVED);
+		assert!(protocol.is_valid(), "{:?} isn't a valid protocol", protocol);
 
 		IPv4Header {
 			protocol,
@@ -150,7 +150,7 @@ impl IPv4Header
 		header.push16(hw);
 	
 		header.push8(self.ttl);				// ttl
-		header.push8(self.protocol);		// protocol
+		header.push8(self.protocol.as_u8());// protocol
 
 		let hw = 0;							// checksum (this is set for real after we've pushed the header)
 		header.push16(hw);
@@ -218,8 +218,8 @@ impl IPv4Header
 		}
 
 		let ttl = packet.pop8();
-		let protocol = packet.pop8();
-		if protocol == RESERVED {
+		let protocol = Protocol::from_u8(packet.pop8());
+		if let Protocol::Standard(StandardProtocol::RESERVED) = protocol {
 			return Err(format!("IPv4Header.protocol is using the RESERVED protocol (use one of the unassigned values instead for a custom protocol)"))
 		}
 

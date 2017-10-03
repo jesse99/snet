@@ -17,11 +17,11 @@
 //! This is the layer responsible for routing frames towards an endpoint.
 mod internet;
 mod ipv4;
-mod protocol_numbers;
+mod protocol;
 mod upper_internet;
 
 pub use self::internet::*;
 pub use self::ipv4::*;		
-pub use self::protocol_numbers::*;
+pub use self::protocol::*;
 pub use self::upper_internet::*;
 

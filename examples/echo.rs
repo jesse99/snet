@@ -70,7 +70,7 @@ fn handle_sender(app: &user::AppComponent, event: &mut Event, state: &SimState, 
 			effector.schedule_after_secs(event, app.data.id, 1.0);
 		},		
 		"timer" => {		
-			let info = internet::InternetInfo::new(internet::UDP, common::IPAddress::IPv4([10, 0, 0, 1]), common::IPAddress::IPv4([127, 0, 0, 2]));
+			let info = internet::InternetInfo::new(internet::Protocol::Standard(internet::StandardProtocol::UDP), common::IPAddress::IPv4([10, 0, 0, 1]), common::IPAddress::IPv4([127, 0, 0, 2]));
 			let options = transport::SocketOptions::with_addr(common::IPAddress::IPv4([127, 0, 0, 2]));
 			let mut packet = common::Packet::new("packet", "#>1");
 			let payload = "hello".to_string();
@@ -115,7 +115,7 @@ fn handle_receiver(app: &user::AppComponent, event: &mut Event, state: &SimState
 			let count = if state.contains(app.data.id, "num_recv") {state.get_int(app.data.id, "num_recv")} else {0};
 			effector.set_int("num_recv", count+1);
 		
-			let info = internet::InternetInfo::new(internet::UDP, common::IPAddress::IPv4([10, 0, 0, 2]), common::IPAddress::IPv4([127, 0, 0, 1]));
+			let info = internet::InternetInfo::new(internet::Protocol::Standard(internet::StandardProtocol::UDP), common::IPAddress::IPv4([10, 0, 0, 2]), common::IPAddress::IPv4([127, 0, 0, 1]));
 			let options = transport::SocketOptions::with_addr(common::IPAddress::IPv4([127, 0, 0, 1]));
 			let mut packet = common::Packet::new("packet", "#>2");
 			let payload = "echoed hello".to_string();
