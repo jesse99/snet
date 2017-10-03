@@ -14,7 +14,7 @@
 // along with this program; if not, write to the Free Software Foundation,
 // Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 use common::*;
-use internet::*;
+//use internet::*;
 // use internet::protocol_numbers::*;
 // use internet::upper_internet::*;
 use link::link::*;
@@ -54,10 +54,10 @@ pub struct Mac80211DataFrame	// see 9.3.2
 
 impl Mac80211DataFrame
 {
-	pub fn new(ipv4: &IPv4Header, seq_num: u16) -> Self
+	pub fn new(src_addr: &MacAddress, dst_addr: &MacAddress, seq_num: u16) -> Self
 	{
-		let sa = [0, 0, ipv4.src_addr[0], ipv4.src_addr[1], ipv4.src_addr[2], ipv4.src_addr[3]];
-		let ta = [0, 0, ipv4.dst_addr[0], ipv4.dst_addr[1], ipv4.dst_addr[2], ipv4.dst_addr[3]];
+		let sa = *src_addr;
+		let ta = *dst_addr;
 		let bssid = [0, 0, 0, 0, 0, 0];
 
 		Mac80211DataFrame {
@@ -156,8 +156,8 @@ pub struct Mac80211Component
 	data: ThreadData,
 
 	/// Listens for "send_down" events.
-	pub upper_in: InPort<(IPv4Header, Packet)>,	
-	pub upper_out: OutPort<(LinkInfo, Packet)>,
+	pub upper_in: InPort<(MacAddress, MacAddress, Packet)>,	
+	pub upper_out: OutPort<(MacAddress, MacAddress, Packet)>,
 
 	/// Listens for "send_up" events.
 	pub lower_in: InPort<Packet>,
@@ -195,8 +195,8 @@ impl Mac80211Component
 					let sn = state.get_int(self.data.id, "sn");
 					effector.set_int("num_recv", (sn+1) % 4096);	// sequence number is 12 bits so modulo 4096
 
-					let (ipv4, mut packet) = event.take_payload::<(IPv4Header, Packet)>();
-					let header = Mac80211DataFrame::new(&ipv4, sn as u16);
+					let (src_addr, dst_addr, mut packet) = event.take_payload::<(MacAddress, MacAddress, Packet)>();
+					let header = Mac80211DataFrame::new(&src_addr, &dst_addr, sn as u16);
 					header.push(&mut packet);
 					self.pcap_out.send_payload(&mut effector, "send_ieee80211", packet.clone());
 					self.lower_out.send_payload(&mut effector, &event.name, (self.data.id, packet));
@@ -206,8 +206,7 @@ impl Mac80211Component
 					self.pcap_out.send_payload(&mut effector, "send_ieee80211", packet.clone());
 					match Mac80211DataFrame::pop(&mut packet) {
 						Ok(header) => {
-							let linfo = LinkInfo::new(0, &header.sa, &header.da);	// TODO: not sure what to do with ether_type since it's not present in 802.11
-							self.upper_out.send_payload(&mut effector, &event.name, (linfo, packet));
+							self.upper_out.send_payload(&mut effector, &event.name, (header.sa, header.da, packet));
 						},
 						Err(mesg) => log_warning!(effector, "pop failed: {}", mesg)
 					}

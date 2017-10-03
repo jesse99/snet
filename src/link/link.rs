@@ -14,7 +14,7 @@
 // along with this program; if not, write to the Free Software Foundation,
 // Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 //use common::*;
-use internet::*;
+//use internet::*;
 // use score::*;
 // use std::str;
 // use std::thread;
@@ -27,7 +27,7 @@ pub type MacAddress = [u8; 6];
 pub struct LinkInfo
 {
 	/// See https://en.wikipedia.org/wiki/EtherType
-	pub ether_type: u8,	// TODO: use an enum for this
+	pub ether_type: u16,	// TODO: use an enum for this
 	
 	/// The sender of the packet.
 	pub src_addr: MacAddress,
@@ -38,10 +38,8 @@ pub struct LinkInfo
 
 impl LinkInfo
 {
-	pub fn new(protocol: u8, src_addr: &MacAddress, dst_addr: &MacAddress) -> Self
+	pub fn new(ether_type: u16, src_addr: &MacAddress, dst_addr: &MacAddress) -> Self
 	{	
-		assert!(protocol != RESERVED);
-		let ether_type = protocol;		// TODO: this isn't right
 		LinkInfo {ether_type, src_addr: *src_addr, dst_addr: *dst_addr}
 	}
 }

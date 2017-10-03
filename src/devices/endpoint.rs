@@ -36,6 +36,7 @@ pub struct Endpoint
 
 	pub app: AppComponent,
 	pub ipv4: IPv4Component,	// TODO: should be InternetComponent
+	pub llc: LlcComponent,
 	pub mac: Mac80211Component,
 
 	pub pcap: PcapComponent,
@@ -49,6 +50,7 @@ impl Endpoint
 
 		let app = AppComponent::new(sim, id);
 		let ipv4 = IPv4Component::new(sim, id);
+		let llc = LlcComponent::new(sim, id);
 		let mac = Mac80211Component::new(sim, id);
 		let pcap = PcapComponent::new(sim, id);
 		Endpoint {
@@ -56,6 +58,7 @@ impl Endpoint
 			id,
 			app,
 			ipv4,
+			llc,
 			mac,
 
 			pcap,
@@ -68,15 +71,19 @@ impl Endpoint
 		self.app.upper_out.connect_to(&self.ipv4.upper_in);
 		self.ipv4.upper_out.connect_to(&self.app.upper_in);
 
-		self.ipv4.lower_out.connect_to(&self.mac.upper_in);
-		self.mac.upper_out.connect_to(&self.ipv4.lower_in);
+		self.ipv4.lower_out.connect_to(&self.llc.upper_in);
+		self.llc.upper_out.connect_to(&self.ipv4.lower_in);
+
+		self.llc.lower_out.connect_to(&self.mac.upper_in);
+		self.mac.upper_out.connect_to(&self.llc.lower_in);
 
 		self.mac.pcap_out.connect_to(&self.pcap.ieee80211_in);
 		medium.connect(&mut self.mac.lower_out, &self.mac.lower_in);
-	
+		
 		// Spin up the threads.
 		self.app.start();
 		self.ipv4.start();
+		self.llc.start();
 		self.mac.start();
 		self.pcap.start();
 		

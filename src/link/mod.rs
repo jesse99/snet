@@ -18,12 +18,14 @@
 pub use self::ideal_mac::*;
 pub use self::link::*;
 pub use self::link_helpers::*;
+pub use self::llc::*;
 pub use self::mac80211::*;
 pub use self::pcap::*;
 
 mod ideal_mac;
 mod link;
 mod link_helpers;
+mod llc;
 mod mac80211;
 mod pcap;
 
