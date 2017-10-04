@@ -172,7 +172,7 @@ pub enum StandardProtocol
 	RESERVED = 255,		// Reserved [Internet_Assigned_Numbers_Authority] People
 }
 
-// We have to use multiple enums because C style and Rust style enums can't be used within one enum
+// We have to use multiple enums because both C style and Rust style enums can't be used within one enum.
 #[derive(Clone, Copy, Debug)]
 pub enum Protocol
 {

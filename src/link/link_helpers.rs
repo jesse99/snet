@@ -14,19 +14,10 @@
 // along with this program; if not, write to the Free Software Foundation,
 // Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 use common::*;
-// use internet::*;
-// use internet::protocol_numbers::*;
-// use internet::upper_internet::*;
-// use link::link::*;
-// use score::*;
-// use std::str;
-// use std::thread;
-// use std::u16;
-// use transport::socket::*;
 
 // CRC_TABLE was generated with:
 // #include <stdio.h>
-
+// 
 // int main()
 // {
 // 	printf("const CRC_TABLE: [u32; 256] = [");

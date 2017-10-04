@@ -15,14 +15,10 @@
 // Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 use common::*;
 use internet::*;
-// use internet::protocol_numbers::*;
-// use internet::upper_internet::*;
+use link::ether_type::*;
 use link::link::*;
 use score::*;
-// use std::str;
 use std::thread;
-// use std::u16;
-// use transport::socket::*;
 
 /// MAC that relies on a perfectly ideal wire.
 pub struct IdealMacComponent	// TODO: get rid of this later?
@@ -66,7 +62,7 @@ impl IdealMacComponent
 				},
 				"send_up" => {
 					let packet = event.take_payload::<Packet>();
-					let linfo = LinkInfo::new(0, &[0, 0, 0, 0, 0, 0], &[0, 0, 0, 0, 0, 0]);	// TODO: need to push and pop this
+					let linfo = LinkInfo::new(EtherType::IPv4, &[0, 0, 0, 0, 0, 0], &[0, 0, 0, 0, 0, 0]);	// TODO: need to push and pop this
 					self.upper_out.send_payload(&mut effector, &event.name, (linfo, packet));
 				}
 			);

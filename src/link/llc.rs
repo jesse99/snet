@@ -15,21 +15,15 @@
 // Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 use common::*;
 use internet::*;
-// use internet::protocol_numbers::*;
-// use internet::upper_internet::*;
+use link::ether_type::*;
 use link::link::*;
-//use link::link_helpers::*;
 use score::*;
-// use std::str;
 use std::thread;
-// use std::u16;
-// use transport::socket::*;
-
 
 /// In memory representation of a Logical Link Control header (SNAP variant only).
 pub struct LlcHeader
 {
-	pub ether_type: u16,
+	pub ether_type: EtherType,
 }
 
 // See
@@ -40,7 +34,7 @@ impl LlcHeader
 {
 	pub fn with_ipv4() -> Self
 	{
-		LlcHeader {ether_type: 0x0800}
+		LlcHeader {ether_type: EtherType::IPv4}
 	}
 
 	/// Adds an LLC header to the packet.
@@ -64,7 +58,7 @@ impl LlcHeader
 		header.push8(oui);
 		header.push8(oui);
 
-		let protocol_id = self.ether_type;
+		let protocol_id = self.ether_type.as_u16();
 		header.push16(protocol_id);
 
 		packet.push_header(&header);
@@ -95,7 +89,12 @@ impl LlcHeader
 			return Err("OUI isn't 0".to_string())
 		}
 
-		Ok(LlcHeader {ether_type: packet.pop16()})
+		let ether_type = EtherType::from_u16(packet.pop16());
+		if !ether_type.is_valid() {
+			return Err(format!("ether_type {:?} isn't valid", ether_type))
+		}
+
+		Ok(LlcHeader {ether_type})
 	}
 }
 

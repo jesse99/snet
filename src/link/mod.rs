@@ -15,6 +15,7 @@
 // Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 //! This is the layer responsible for routing frames towards an endpoint.
+pub use self::ether_type::*;
 pub use self::ideal_mac::*;
 pub use self::link::*;
 pub use self::link_helpers::*;
@@ -22,6 +23,7 @@ pub use self::llc::*;
 pub use self::mac80211::*;
 pub use self::pcap::*;
 
+mod ether_type;
 mod ideal_mac;
 mod link;
 mod link_helpers;
