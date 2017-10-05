@@ -32,8 +32,8 @@ pub struct AppComponent
 	pub data: ThreadData,
 	pub callback: Option<AppCallback>,
 
-	pub upper_in: InPort<(InternetInfo, Packet)>,	
-	pub upper_out: OutPort<(InternetInfo, SocketOptions, Packet)>,
+	pub lower_in: InPort<(InternetInfo, Packet)>,	
+	pub lower_out: OutPort<(InternetInfo, SocketOptions, Packet)>,
 }
 
 impl AppComponent
@@ -45,8 +45,8 @@ impl AppComponent
 			data,
 			callback: None,
 
-			upper_in: InPort::with_port_name(id, "upper_in"),
-			upper_out: OutPort::new(),
+			lower_in: InPort::with_port_name(id, "lower_in"),
+			lower_out: OutPort::new(),
 		}
 	}
 	

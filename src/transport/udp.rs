@@ -20,7 +20,7 @@ use score::*;
 // use std::str;
 use std::thread;
 use std::u16;
-// use transport::socket::*;
+use transport::*;
 
 /// In memory version of the UDP header. When serialized to a [`Packet`] it's packed according to the spec.
 pub struct UDPHeader
@@ -80,25 +80,25 @@ impl UDPHeader
 
 /// Pushes an UDPHeader onto packets moving down the network stack.
 /// Pops off an UDPHeader header for packets moving up the stack.
-pub struct UDPComponent
+pub struct UdpComponent
 {
 	data: ThreadData,
 
 	/// Listens for "send_down" events.
-	pub upper_in: InPort<(u16, Packet)>,	// takes a dstPort, TODO: should this be a Socket?
-	pub upper_out: OutPort<(UDPHeader, Packet)>,	
+	pub upper_in: InPort<(InternetInfo, SocketOptions, Packet)>,	// TODO: need a port from somewhere, take a Socket?
+	pub upper_out: OutPort<(InternetInfo, Packet)>,	
 
 	/// Listens for "send_up" events.
 	pub lower_in: InPort<(InternetInfo, Packet)>,
-	pub lower_out: OutPort<(UDPHeader, Packet)>,
+	pub lower_out: OutPort<(InternetInfo, SocketOptions, Packet)>,
 }
 
-impl UDPComponent
+impl UdpComponent
 {
 	pub fn new(sim: &mut Simulation, parent_id: ComponentID) -> Self
 	{
 		let (id, data) = sim.add_active_component("UDP", parent_id);
-		UDPComponent {
+		UdpComponent {
 			data: data,
 
 			upper_in: InPort::with_port_name(id, "upper_in"),
@@ -116,17 +116,17 @@ impl UDPComponent
 				"init 0" => {
 				},
 				"send_down" => {
-					let (dst_port, mut packet) = event.take_payload::<(u16, Packet)>();
+					let (info, options, mut packet) = event.take_payload::<(InternetInfo, SocketOptions, Packet)>();
 					let src_port = 1;	// TODO: use an epheremal port
-					let header = UDPHeader::new(src_port, dst_port);
+					let header = UDPHeader::new(src_port, 19);
 					header.push(&mut packet);
 
-					self.lower_out.send_payload(&mut effector, &event.name, (header, packet));
+					self.lower_out.send_payload(&mut effector, &event.name, (info, options, packet));
 				},
 				"send_up" => {
-					let (_, mut packet) = event.take_payload::<(InternetInfo, Packet)>();
+					let (info, mut packet) = event.take_payload::<(InternetInfo, Packet)>();
 					match UDPHeader::pop(&mut packet) {
-						Ok(header) => self.upper_out.send_payload(&mut effector, &event.name, (header, packet)),
+						Ok(_header) => self.upper_out.send_payload(&mut effector, &event.name, (info, packet)),
 						Err(mesg) => log_warning!(effector, "pop failed: {}", mesg)
 					}
 				}

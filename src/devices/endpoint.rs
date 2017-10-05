@@ -21,7 +21,7 @@ use physical::*;
 use score::*;
 // use std::str;
 //use std::thread;
-//use transport::socket::*;
+use transport::*;
 use user::*;
 
 const START_X: f64 = 25.0;
@@ -35,6 +35,7 @@ pub struct Endpoint
 	pub id: ComponentID,
 
 	pub app: AppComponent,
+	pub udp: UdpComponent,
 	pub ipv4: IPv4Component,	// TODO: should be InternetComponent
 	pub llc: LlcComponent,
 	pub mac: Mac80211Component,
@@ -49,6 +50,7 @@ impl Endpoint
 		let id = sim.add_component(name, parent_id);
 
 		let app = AppComponent::new(sim, id);
+		let udp = UdpComponent::new(sim, id);
 		let ipv4 = IPv4Component::new(sim, id);
 		let llc = LlcComponent::new(sim, id);
 		let mac = Mac80211Component::new(sim, id);
@@ -57,6 +59,7 @@ impl Endpoint
 			name: name.to_string(),
 			id,
 			app,
+			udp,
 			ipv4,
 			llc,
 			mac,
@@ -68,8 +71,11 @@ impl Endpoint
 	pub fn start(mut self, sim: &mut Simulation, medium: &mut Medium80211Component)	// TODO: use a trait for the medium
 	{
 		// Wire together the components.
-		self.app.upper_out.connect_to(&self.ipv4.upper_in);
-		self.ipv4.upper_out.connect_to(&self.app.upper_in);
+		self.app.lower_out.connect_to(&self.udp.upper_in);
+		self.udp.upper_out.connect_to(&self.app.lower_in);
+
+		self.udp.lower_out.connect_to(&self.ipv4.upper_in);
+		self.ipv4.upper_out.connect_to(&self.udp.lower_in);
 
 		self.ipv4.lower_out.connect_to(&self.llc.upper_in);
 		self.llc.upper_out.connect_to(&self.ipv4.lower_in);
@@ -82,6 +88,7 @@ impl Endpoint
 		
 		// Spin up the threads.
 		self.app.start();
+		self.udp.start();
 		self.ipv4.start();
 		self.llc.start();
 		self.mac.start();

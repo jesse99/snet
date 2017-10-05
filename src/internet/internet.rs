@@ -17,7 +17,6 @@ use common::*;
 use internet::ipv4::*;
 use internet::protocol::*;
 use score::*;
-// use std::str;
 use std::thread;
 use transport::*;
 

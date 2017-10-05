@@ -75,7 +75,7 @@ fn handle_sender(app: &user::AppComponent, event: &mut Event, state: &SimState, 
 			let mut packet = common::Packet::new("packet", "#>1");
 			let payload = "hello".to_string();
 			packet.push_back_bytes(payload.as_bytes());
-			app.upper_out.send_payload_after_secs(effector, "send_down", 1.0, (info, options, packet));
+			app.lower_out.send_payload_after_secs(effector, "send_down", 1.0, (info, options, packet));
 
 			let sent = if state.contains(app.data.id, "num_sent") {state.get_int(app.data.id, "num_sent")} else {0};
 			effector.set_int("num_sent", sent+1);
@@ -120,7 +120,7 @@ fn handle_receiver(app: &user::AppComponent, event: &mut Event, state: &SimState
 			let mut packet = common::Packet::new("packet", "#>2");
 			let payload = "echoed hello".to_string();
 			packet.push_back_bytes(payload.as_bytes());
-			app.upper_out.send_payload_after_secs(effector, "send_down", 1.0, (info, options, packet));
+			app.lower_out.send_payload_after_secs(effector, "send_down", 1.0, (info, options, packet));
 		},		
 		_ => {
 			let cname = &(*state.components).get(app.data.id).name;
