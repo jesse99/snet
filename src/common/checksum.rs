@@ -55,7 +55,9 @@ pub fn finish_checksum<I>(bytes: &I, offset: usize, len: usize, initial: u32) ->
 		i += 2;
 	}
 
-	// Add the left over byte if it exists.
+	// Add the left over byte if it exists. Note that for UDP and TCP a pad byte is supposed
+	// to be added when the length is odd. Rather than molesting the payload we just shift
+	// the left over byte leftwards.
 	if i < offset+len {
 		let word = (*bytes.index(i) as u16) << 8;
 		sum = sum.wrapping_add(word as u32);

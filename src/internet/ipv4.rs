@@ -178,7 +178,7 @@ impl IPv4Header
 		let in_len = packet.len();
 		let crc = packet.checksum(20);
 		if crc != 0 {
-			return Err("IPv4Header checksum error".to_string())
+			return Err("Checksum error".to_string())
 		}
 
 		let b = packet.pop8();

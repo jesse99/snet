@@ -54,9 +54,9 @@ impl UDPHeader
 		header.push16(self.src_port);
 		header.push16(self.dst_port);
 		header.push16(total_len as u16);
-		header.push16(0);	// TODO: checksum is optional for IPv4 but mandatory for IPv6 (and we need to compute it using an annoying pseudo-header)
+		header.push16(0);
 
-		let crc1 = UDPHeader::psuedo_header_checksum(packet, info);
+		let crc1 = UDPHeader::psuedo_header_checksum(packet.len() as u16, info);
 		let crc2 = header.start_checksum(crc1);
 		let crc = packet.finish_checksum(packet.len(), crc2);
 		header.data[6] = (crc >> 8) as u8;
@@ -66,9 +66,15 @@ impl UDPHeader
 	}
 
 	/// Removes a UDP header from the packet.
-	pub fn pop(packet: &mut Packet) -> Result<UDPHeader, String>
+	pub fn pop(packet: &mut Packet, info: &InternetInfo) -> Result<UDPHeader, String>
 	{
 		let in_len = packet.len();
+
+		let crc1 = UDPHeader::psuedo_header_checksum((packet.len() - 8) as u16, info);
+		let crc = packet.finish_checksum(packet.len(), crc1);
+		if crc != 0 {
+			return Err("Checksum error".to_string())
+		}
 
 		let src_port = packet.pop16();
 		let dst_port = packet.pop16();
@@ -83,7 +89,7 @@ impl UDPHeader
 		Ok(header)
 	}
 
-	fn psuedo_header_checksum(packet: &Packet, info: &InternetInfo) -> u32
+	fn psuedo_header_checksum(payload_len: u16, info: &InternetInfo) -> u32
 	{
 		match info.dst_addr {
 			IPAddress::IPv4(dst_addr) => {
@@ -103,8 +109,7 @@ impl UDPHeader
 						header.push8(0);				// zeros
 						header.push8(17);				// protocol
 
-						let len = packet.len() as u16;
-						header.push16(8 + len);			// header len + data len
+						header.push16(8 + payload_len);	// header len + data len
 
 						header.start_checksum(0)
 					},
@@ -163,7 +168,7 @@ impl UdpComponent
 				},
 				"send_up" => {
 					let (info, mut packet) = event.take_payload::<(InternetInfo, Packet)>();
-					match UDPHeader::pop(&mut packet) {
+					match UDPHeader::pop(&mut packet, &info) {
 						Ok(_header) => self.upper_out.send_payload(&mut effector, &event.name, (info, packet)),
 						Err(mesg) => log_warning!(effector, "pop failed: {}", mesg)
 					}
