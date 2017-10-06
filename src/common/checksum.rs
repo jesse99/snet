@@ -19,26 +19,51 @@ use std::ops::Index;
 pub fn checksum<I>(bytes: &I, offset: usize, len: usize) -> u16
 	where I: Index<usize, Output=u8>
 {
+	finish_checksum(bytes, offset, len, 0)
+}
+
+/// Used to compute the Internet checksum from multiple buffers.
+pub fn start_checksum<I>(bytes: &I, offset: usize, len: usize, initial: u32) -> u32
+	where I: Index<usize, Output=u8>
+{	
+	let mut sum = initial;
+
+	let mut i = offset;
+	while i+1 < offset+len {
+		let word = (*bytes.index(i) as u16) << 8 | (*bytes.index(i+1) as u16);
+		sum = sum.wrapping_add(word as u32);
+		i += 2;
+	}
+
+	assert!(i == offset+len, "must be an even number of bytes");
+
+	sum
+}
+
+/// Used to compute the Internet checksum from multiple buffers.
+pub fn finish_checksum<I>(bytes: &I, offset: usize, len: usize, initial: u32) -> u16
+	where I: Index<usize, Output=u8>
+{
 	// Based on section 4.1 in https://tools.ietf.org/html/rfc1071
-	let mut sum: i32 = 0;
+	let mut sum = initial;
 
 	// Add each 16-bit word
 	let mut i = offset;
 	while i+1 < offset+len {
-		let word = (*bytes.index(i) as u16) << 8 | (*bytes.index(i+1) as u16);
-		sum = sum.wrapping_add(word as i32);
+		let word = (*bytes.index(i) as u16) << 8 | (*bytes.index(i+1) as u16);	// we store the checksum in network endian (aka big endian) so we need to do the loads using network endian
+		sum = sum.wrapping_add(word as u32);
 		i += 2;
 	}
 
 	// Add the left over byte if it exists.
 	if i < offset+len {
-		let word = *bytes.index(i) as u16;
-		sum = sum.wrapping_add(word as i32);
+		let word = (*bytes.index(i) as u16) << 8;
+		sum = sum.wrapping_add(word as u32);
 	}
 
 	// Fold the 32-bit sum into 16-bits.
 	while (sum >> 16) != 0 {
-		sum = (sum & 0xFFFF) | (sum >> 16);
+		sum = (sum & 0xFFFF).wrapping_add(sum >> 16);
 	}
 
 	// And return the complement.

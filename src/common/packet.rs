@@ -155,6 +155,11 @@ impl Packet
 	{
 		super::checksum::checksum(&self.payload, self.offset, len)
 	}
+
+	pub fn finish_checksum(&self, len: usize, seed: u32) -> u16
+	{
+		super::checksum::finish_checksum(&self.payload, self.offset, len, seed)
+	}
 }
 
 // TODO: Ideally we would add headers directly to Packet but I wasn't able to figure out an
@@ -198,6 +203,11 @@ impl Header
 	pub fn push_bytes(&mut self, data: &[u8])
 	{
 		self.data.extend(data);
+	}
+
+	pub fn start_checksum(&self, seed: u32) -> u32
+	{
+		super::checksum::start_checksum(&self.data, 0, self.data.len(), seed)
 	}
 
 	pub fn checksum(&self) -> u16

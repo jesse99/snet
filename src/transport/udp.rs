@@ -44,7 +44,7 @@ impl UDPHeader
 	}
 
 	/// Adds a UDP header to the packet.
-	pub fn push(&self, packet: &mut Packet)
+	pub fn push(&self, packet: &mut Packet, info: &InternetInfo)
 	{
 		let payload_len = packet.len();
 		let total_len = 8 + payload_len;
@@ -55,6 +55,12 @@ impl UDPHeader
 		header.push16(self.dst_port);
 		header.push16(total_len as u16);
 		header.push16(0);	// TODO: checksum is optional for IPv4 but mandatory for IPv6 (and we need to compute it using an annoying pseudo-header)
+
+		let crc1 = UDPHeader::psuedo_header_checksum(packet, info);
+		let crc2 = header.start_checksum(crc1);
+		let crc = packet.finish_checksum(packet.len(), crc2);
+		header.data[6] = (crc >> 8) as u8;
+		header.data[7] = (crc & 0xFF) as u8;	
 
 		packet.push_header(&header);
 	}
@@ -75,6 +81,38 @@ impl UDPHeader
 
 		let header = UDPHeader {src_port, dst_port};
 		Ok(header)
+	}
+
+	fn psuedo_header_checksum(packet: &Packet, info: &InternetInfo) -> u32
+	{
+		match info.dst_addr {
+			IPAddress::IPv4(dst_addr) => {
+				match info.src_addr {
+					IPAddress::IPv4(src_addr) => {
+						let mut header = Header::with_capacity(12);
+						header.push8(src_addr[0]);		// source IP
+						header.push8(src_addr[1]);
+						header.push8(src_addr[2]);
+						header.push8(src_addr[3]);
+
+						header.push8(dst_addr[0]);		// destination IP
+						header.push8(dst_addr[1]);
+						header.push8(dst_addr[2]);
+						header.push8(dst_addr[3]);
+
+						header.push8(0);				// zeros
+						header.push8(17);				// protocol
+
+						let len = packet.len() as u16;
+						header.push16(8 + len);			// header len + data len
+
+						header.start_checksum(0)
+					},
+					IPAddress::IPv6(_) => panic!("InternetInfo has mixed IPv4 and IPv6 addresses")
+				}
+			},
+			IPAddress::IPv6(_) => panic!("IPv6 isn't supported yet")
+		}
 	}
 }
 
@@ -119,7 +157,7 @@ impl UdpComponent
 					let (info, options, mut packet) = event.take_payload::<(InternetInfo, SocketOptions, Packet)>();
 					let src_port = 1;	// TODO: use an epheremal port
 					let header = UDPHeader::new(src_port, 19);
-					header.push(&mut packet);
+					header.push(&mut packet, &info);
 
 					self.lower_out.send_payload(&mut effector, &event.name, (info, options, packet));
 				},
